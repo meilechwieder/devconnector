@@ -35,7 +35,7 @@ router.post(
       if (user) {
         return res.status(400).json({
           success: false,
-          error: [{ msg: 'User already exists', param: 'name' }],
+          errors: [{ msg: 'User already exists', param: 'email' }],
         });
       }
 
@@ -44,7 +44,6 @@ router.post(
         r: 'pg',
         d: 'mm',
       });
-
       user = new User({
         name,
         email,
@@ -71,7 +70,7 @@ router.post(
         },
         (err, token) => {
           if (err) throw err;
-          res.json({ success: true, token });
+          res.json({ success: true, data: token });
         }
       );
     } catch (error) {

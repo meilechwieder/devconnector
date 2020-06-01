@@ -7,6 +7,7 @@ const config = require('config');
 const { check, validationResult } = require('express-validator');
 const Profile = require('../../models/Profile');
 const User = require('../../models/User');
+const Post = require('../../models/Post');
 
 // @ route    GET api/profile/me
 // @ desc     get current users profile
@@ -73,7 +74,9 @@ router.post(
       if (status) profileFields.status = status;
       if (githubusername) profileFields.githubusername = githubusername;
       if (skills)
-        profileFields.skills = skills.split(',').map((skill) => skill.trim());
+        profileFields.skills = Array.isArray(skills)
+          ? skills
+          : skills.split(',').map((skill) => skill.trim());
 
       //build social object
       profileFields.social = {};
@@ -112,7 +115,7 @@ router.post(
 router.get('/', async (req, res) => {
   try {
     const profiles = await Profile.find().populate('user', ['name', 'avatar']);
-    res.json({ success: true, data: profile });
+    res.json({ success: true, data: profiles });
   } catch (error) {
     console.error(error);
     res.status(500).send('server error');
@@ -149,6 +152,9 @@ router.get('/user/:user_id', async (req, res) => {
 // @access    Private
 router.delete('/', auth, async (req, res) => {
   try {
+    //remove user posts
+    await Post.deleteMany({ user: req.user.id });
+
     await Profile.findOneAndRemove({
       user: req.user.id,
     });
@@ -185,7 +191,7 @@ router.put(
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty())
-      return res.status(400).json({ success: false, errors: results.array() });
+      return res.status(400).json({ success: false, errors: errors.array() });
 
     const {
       title,
@@ -201,9 +207,9 @@ router.put(
       title,
       company,
       location,
-      from,
-      to,
-      current,
+      from: new Date(from),
+      to: to ? new Date(to) : '',
+      current: isNaN(this.to) ? current : false,
       description,
     };
 
@@ -215,8 +221,11 @@ router.put(
           success: false,
           errors: [{ msg: 'User does not have a profile yet' }],
         });
-
-      if (isNaN(new Date(from)) || isNaN(new Date(to)))
+      if (
+        isNaN(newExp.from) ||
+        (newExp.to && isNaN(newExp.to)) ||
+        (newExp.to && newExp.from > newExp.to)
+      )
         return res.status(400).json({
           success: false,
           errors: [{ msg: 'Date is invalid' }],
@@ -234,19 +243,53 @@ router.put(
   }
 );
 
-// @ route    DELETe api/profile/experience/:edu_id
+// @ route    DELETe api/profile/experience/:exp_id
 // @ desc     delete experience from profile\
 // @access    Private
-router.delete('/experience/:edu_id', auth, async (req, res) => {
+router.delete('/experience/:exp_id', auth, async (req, res) => {
   try {
     const profile = await Profile.findOne({ user: req.user.id });
 
     const removeIndex = profile.experience.findIndex(
-      (e) => e._id === req.params.edu_id
+      (e) => e._id.toString() === req.params.exp_id
     );
+
+    console.log(typeof req.params.exp_id);
+    if (removeIndex === -1)
+      return res.status(400).json({
+        success: false,
+        errors: [{ msg: 'Experience ID not found' }],
+      });
 
     profile.experience.splice(removeIndex, 1);
     console.log(removeIndex);
+    await profile.save();
+
+    res.json({ success: true, data: profile });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('server error');
+  }
+});
+
+// @ route    DELETe api/profile/education/:edu_id
+// @ desc     delete education from profile\
+// @access    Private
+router.delete('/education/:edu_id', auth, async (req, res) => {
+  try {
+    const profile = await Profile.findOne({ user: req.user.id });
+
+    const removeIndex = profile.education.findIndex(
+      (e) => e._id.toString() === req.params.edu_id
+    );
+    if (removeIndex === -1)
+      return res.status(400).json({
+        success: false,
+        errors: [{ msg: 'Education ID not found' }],
+      });
+
+    profile.education.splice(removeIndex, 1);
+
     await profile.save();
 
     res.json({ success: true, data: profile });
@@ -273,7 +316,7 @@ router.put(
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty())
-      return res.status(400).json({ success: false, errors: results.array() });
+      return res.status(400).json({ success: false, errors: errors.array() });
 
     const {
       school,
@@ -289,9 +332,9 @@ router.put(
       school,
       degree,
       fieldofstudy,
-      from,
-      to,
-      current,
+      from: new Date(from),
+      to: to ? new Date(to) : '',
+      current: isNaN(this.to) ? current : false,
       description,
     };
 
@@ -304,7 +347,11 @@ router.put(
           errors: [{ msg: 'User does not have a profile yet' }],
         });
 
-      if (isNaN(new Date(from)) || isNaN(new Date(to)))
+      if (
+        isNaN(newEdu.from) ||
+        (newEdu.to && isNaN(newEdu.to)) ||
+        (newEdu.to && newEdu.from > newEdu.to)
+      )
         return res.status(400).json({
           success: false,
           errors: [{ msg: 'Date is invalid' }],
@@ -321,34 +368,6 @@ router.put(
     }
   }
 );
-
-// @ route    DELETe api/profile/education/:eud_id
-// @ desc     delete education from profile\
-// @access    Private
-router.delete('/education/:eud_id', auth, async (req, res) => {
-  try {
-    const profile = await Profile.findOne({ user: req.user.id });
-
-    const removeIndex = profile.education.findIndex(
-      (e) => e._id === req.params.eud_id
-    );
-
-    if (removeIndex === -1)
-      return res.status(400).json({
-        success: false,
-        errors: [{ msg: 'Education ID not found' }],
-      });
-
-    profile.education.splice(removeIndex, 1);
-
-    await profile.save();
-
-    res.json({ success: true, data: profile });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('server error');
-  }
-});
 
 // @ route    GET api/profile/github/:username
 // @ desc     get github user repos

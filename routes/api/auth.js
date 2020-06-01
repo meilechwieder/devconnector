@@ -9,12 +9,12 @@ const auth = require('../../middleware/auth');
 const user = require('../../models/User');
 
 // @ route    api/auth
-// @ desc     test rout
+// @ desc     get user
 // @access    public
 router.get('/', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
-    res.json(user);
+    res.json({ data: user });
   } catch (error) {
     console.error(error);
     res.status(500).send('server error');
@@ -44,7 +44,7 @@ router.post(
       if (!user) {
         return res.status(400).json({
           success: false,
-          error: [{ msg: 'Invalid credentials' }],
+          errors: [{ msg: 'Invalid credentials' }],
         });
       }
 
@@ -53,7 +53,7 @@ router.post(
       if (!doesPasswordMatch)
         return res.status(400).json({
           success: false,
-          error: [{ msg: 'Invalid credentials' }],
+          errors: [{ msg: 'Invalid credentials' }],
         });
 
       const payload = {
@@ -70,7 +70,7 @@ router.post(
         },
         (err, token) => {
           if (err) throw err;
-          res.json({ success: true, token });
+          res.json({ success: true, data: token });
         }
       );
     } catch (error) {
