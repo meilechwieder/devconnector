@@ -80,8 +80,9 @@ const CreateProfile = ({
 
   const onSubmit = (e) => {
     e.preventDefault();
-    setIsSubmitting(!isSubmitting);
+    setIsSubmitting(true);
     setTimeout(() => {
+    setIsSubmitting(false);
       createProfile(formData, history, edit);
     }, 1500);
   };
