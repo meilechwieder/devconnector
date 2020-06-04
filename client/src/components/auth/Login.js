@@ -1,9 +1,8 @@
-import React, { useState, Fragment, useEffect } from 'react';
+import React, { useState, Fragment } from 'react';
 import { Link, Redirect } from 'react-router-dom';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { login } from '../../actions/auth';
-import { profile_url } from 'gravatar';
 
 const Login = ({ login, isAuthenticated }) => {
   const [formData, setFromData] = useState({

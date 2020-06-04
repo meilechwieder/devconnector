@@ -1,4 +1,4 @@
-import React, { useEffect, Fragment } from 'react';
+import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import Spinner from '../layout/Spinner';
@@ -13,7 +13,7 @@ const Dashboard = ({
   auth: { user },
   profile: { profile, loading },
 }) => {
-  return (loading && profile === null) || !user ? (
+  return (loading && !profile) || !user ? (
     <Spinner />
   ) : (
     <Fragment>

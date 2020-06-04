@@ -1,6 +1,6 @@
 import React, { Fragment, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Link, Redirect } from 'react-router-dom';
+import { Link, withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { addEducation } from '../../actions/profile';
 
@@ -106,7 +106,7 @@ const AddEducation = ({ addEducation, history }) => {
             type='date'
             name='to'
             disabled={toDateDisabled}
-            min={from ? new Date(from).toISOString().substring(0,10) : ''}
+            min={from ? new Date(from).toISOString().substring(0, 10) : ''}
             value={to}
             onChange={onChange}
           />
@@ -134,4 +134,4 @@ AddEducation.propTypes = {
   addEducation: PropTypes.func.isRequired,
 };
 
-export default connect(null, { addEducation })(AddEducation);
+export default connect(null, { addEducation })(withRouter(AddEducation));

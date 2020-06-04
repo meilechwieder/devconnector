@@ -12,7 +12,7 @@ const CreateProfile = ({
   profile: { profile, loading },
 }) => {
   useEffect(() => {
-    getCurrentProfile();
+    if (!profile) getCurrentProfile();
     if (!loading && profile) {
       setFormData({
         company: profile.company ? profile.company : '',
@@ -33,7 +33,7 @@ const CreateProfile = ({
         });
       }
     }
-  }, [loading]);
+  }, [loading, getCurrentProfile, profile]);
 
   const edit = profile ? true : false;
 
@@ -82,7 +82,7 @@ const CreateProfile = ({
     e.preventDefault();
     setIsSubmitting(true);
     setTimeout(() => {
-    setIsSubmitting(false);
+      setIsSubmitting(false);
       createProfile(formData, history, edit);
     }, 1500);
   };

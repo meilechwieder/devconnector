@@ -5,13 +5,14 @@ import {
   UPDATE_PROFILE,
   GET_PROFILES,
   GET_REPOS,
+  SET_PROFILE_LOADING,
 } from '../actions/types';
 
 const initialState = {
   profile: null,
-  profiles: [],
-  repos: [],
-  loading: true,
+  profiles: null,
+  repos: null,
+  loading: false,
   errors: {},
 };
 
@@ -40,14 +41,18 @@ export default function (state = initialState, { type, payload }) {
       return {
         ...state,
         profile: null,
-        profiles: [],
-        repos: [],
-        loading: true,
+        repos: null,
       };
     case GET_REPOS:
       return {
         ...state,
         repos: payload,
+        loading: false,
+      };
+    case SET_PROFILE_LOADING:
+      return {
+        ...state,
+        loading: true,
       };
     default:
       return state;

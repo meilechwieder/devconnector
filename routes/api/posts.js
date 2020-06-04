@@ -17,7 +17,7 @@ router.post(
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty())
-      res.status(400).json({ succuss: false, errors: errors.array() });
+      res.status(400).json({ success: false, errors: errors.array() });
 
     try {
       const user = await User.findById(req.user.id).select('-password');
@@ -31,7 +31,7 @@ router.post(
 
       const post = await new Post(newPost).save();
 
-      res.json({ succuss: true, data: post });
+      res.json({ success: true, data: post });
     } catch (error) {
       console.error(error);
       res.status(500).send('server error');
@@ -45,7 +45,7 @@ router.post(
 router.get('/', auth, async (req, res) => {
   try {
     const posts = await Post.find().sort({ date: -1 });
-    res.json({ succuss: true, data: posts });
+    res.json({ success: true, data: posts });
   } catch (error) {
     console.error(error);
     res.status(500).send('server error');
@@ -67,9 +67,9 @@ router.get('/:post_id', auth, async (req, res) => {
     if (!post)
       return res
         .status(404)
-        .json({ succuss: false, errors: [{ msg: 'post not found' }] });
+        .json({ success: false, errors: [{ msg: 'post not found' }] });
 
-    res.json({ succuss: true, data: post });
+    res.json({ success: true, data: post });
   } catch (error) {
     console.error(error);
     res.status(500).send('server error');
@@ -91,12 +91,12 @@ router.delete('/:post_id', auth, async (req, res) => {
     if (post.user.toString() !== req.user.id)
       return res
         .status(401)
-        .json({ succuss: false, errors: [{ msg: 'user unauthorized' }] });
+        .json({ success: false, errors: [{ msg: 'user unauthorized' }] });
 
     await post.remove();
 
-    res.json({ succuss: true, data: { msg: 'post deleted' } });
-    res.json({ succuss: true, data: posts });
+    res.json({ success: true, data: { msg: 'post deleted' } });
+    res.json({ success: true, data: posts });
   } catch (error) {
     console.error(error);
     res.status(500).send('server error');
@@ -118,20 +118,20 @@ router.put('/like/:post_id', auth, async (req, res) => {
     if (!post)
       return res
         .status(404)
-        .json({ succuss: false, errors: [{ msg: 'post not found' }] });
+        .json({ success: false, errors: [{ msg: 'post not found' }] });
 
-    const likes = post.likes.map((e) => e._id.toString());
+    const likes = post.likes.map((e) => (e.user ? e.user.toString() : null));
 
     if (likes.includes(req.user.id))
       return res
         .status(400)
-        .json({ succuss: false, errors: [{ msg: 'post already liked' }] });
+        .json({ success: false, errors: [{ msg: 'post already liked' }] });
 
     post.likes.unshift({ user: req.user.id });
 
     await post.save();
 
-    res.json({ succuss: true, data: post.likes });
+    res.json({ success: true, data: post.likes });
   } catch (error) {
     console.error(error);
     res.status(500).send('server error');
@@ -153,13 +153,13 @@ router.put('/unlike/:post_id', auth, async (req, res) => {
     if (!post)
       return res
         .status(404)
-        .json({ succuss: false, errors: [{ msg: 'post not found' }] });
+        .json({ success: false, errors: [{ msg: 'post not found' }] });
 
-    const likes = post.likes.map((e) => e.id.toString());
+    const likes = post.likes.map((e) => (e.user ? e.user.toString() : null));
 
     if (!likes.includes(req.user.id)) {
       return res.status(400).json({
-        succuss: false,
+        success: false,
         errors: [{ msg: 'you need to like b4 you dislike' }],
       });
     } else {
@@ -172,7 +172,7 @@ router.put('/unlike/:post_id', auth, async (req, res) => {
 
     await post.save();
 
-    res.json({ succuss: true, data: post.likes });
+    res.json({ success: true, data: post.likes });
   } catch (error) {
     console.error(error);
     res.status(500).send('server error');
@@ -183,12 +183,12 @@ router.put('/unlike/:post_id', auth, async (req, res) => {
 // @ desc     commetn on a post
 // @access    public
 router.post(
-  '/comment/:post_id',
+  '/comments/:post_id',
   [auth, [check('text', 'Text is required').not().isEmpty()]],
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty())
-      res.status(400).json({ succuss: false, errors: errors.array() });
+      res.status(400).json({ success: false, errors: errors.array() });
     if (!mongoose.Types.ObjectId.isValid(req.params.post_id))
       return res.status(400).json({
         success: false,
@@ -203,7 +203,7 @@ router.post(
       if (!post)
         return res
           .status(404)
-          .json({ succuss: false, errors: [{ msg: 'post not found' }] });
+          .json({ success: false, errors: [{ msg: 'post not found' }] });
 
       const comment = {
         text: req.body.text,
@@ -215,7 +215,7 @@ router.post(
       post.comments.unshift(comment);
 
       await post.save();
-      res.json({ succuss: true, data: post.comments });
+      res.json({ success: true, data: post.comments });
     } catch (error) {
       console.error(error);
       res.status(500).send('server error');
@@ -226,7 +226,7 @@ router.post(
 // @ route    DELETE api/posts/comment/:post_id/:comment_id
 // @ desc     commen on a post
 // @access    public
-router.delete('/comment/:post_id/:comment_id', auth, async (req, res) => {
+router.delete('/comments/:post_id/:comment_id', auth, async (req, res) => {
   if (
     !mongoose.Types.ObjectId.isValid(req.params.post_id) ||
     !mongoose.Types.ObjectId.isValid(req.params.comment_id)
@@ -246,17 +246,17 @@ router.delete('/comment/:post_id/:comment_id', auth, async (req, res) => {
     if (!post || commentIndex === -1)
       return res
         .status(404)
-        .json({ succuss: false, errors: [{ msg: 'post not found' }] });
+        .json({ success: false, errors: [{ msg: 'post not found' }] });
 
     if (post.comments[commentIndex].user.toString() !== req.user.id)
       return res
         .status(404)
-        .json({ succuss: false, errors: [{ msg: 'user unauthorized' }] });
+        .json({ success: false, errors: [{ msg: 'user unauthorized' }] });
 
     post.comments.splice(commentIndex, 1);
 
     await post.save();
-    res.json({ succuss: true, data: post.comments });
+    res.json({ success: true, data: post.comments });
   } catch (error) {
     console.error(error);
     res.status(500).send('server error');
