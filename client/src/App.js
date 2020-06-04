@@ -20,6 +20,7 @@ import Profiles from './components/profiles/Profiles';
 import Profile from './components/profile/Profile';
 import Posts from './components/posts/Posts';
 import Post from './components/post/Post';
+import NotFound from './components/layout/NotFound';
 
 const App = () => {
   useEffect(() => {
@@ -37,12 +38,13 @@ const App = () => {
         <Fragment>
           <Navbar />
           <Route exact path='/' component={Landing} />
-          <Route exact path='/profiles' component={Profiles} />
-          <Route exact path='/profile/:profile_id' component={Profile} />
           <section className='container'>
             <Alert />
             <Switch>
               <Route exact path='/register' component={Register} />
+              <Route exact path='/login' component={Login} />
+              <Route exact path='/profiles' component={Profiles} />
+              <Route exact path='/profile/:profile_id' component={Profile} />
               <PrivateRoute
                 exact
                 path='/dashboard'
@@ -79,7 +81,8 @@ const App = () => {
                 to={'/login'}
                 component={Post}
               />
-              <Route exact path='/login' component={Login} />
+              <Route exact path='/' render={null} />
+              <Route component={NotFound} />
             </Switch>
           </section>
         </Fragment>
